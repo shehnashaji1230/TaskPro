@@ -1,11 +1,12 @@
 from django.shortcuts import render,redirect
 from django.views.generic import View
-from notes.forms import TaskForm
+from notes.forms import TaskForm,RegisterForm,SignInForm
 from notes.models import Task
 from django.contrib import messages
 from django import forms
 from django.db.models import Q
 from django.db.models import Count
+from django.contrib.auth.models import User
 # Create your views here.
 
 class TaskCreateView(View):
@@ -105,7 +106,26 @@ class TaskSummaryView(View):
             "status_summary":status_summary
         }
         return render(request,"tasksummary.html",context)
-            
 
+class SignUpView(View):
+    template_name='register.html'
+    def get(self,request,*args,**kwargs):
+        form_instance=RegisterForm()
+        return render(request,self.template_name,{'form':form_instance})
+    
+    def post(self,request,*args,**kwargs):
+        form_instance=RegisterForm(request.POST)
+        if form_instance.is_valid():
+            data=form_instance.cleaned_data
+            User.objects.create_user(**data)
+            return redirect('signin')
+        else:
+            return render(request,self.template_name,{'form':form_instance})
+            
+class SignInView(View):
+    template_name='login.html'
+    def get(self,request,*args,**kwargs):
+        form_instance=SignInForm()
+        return render(request,self.template_name,{'form':form_instance})
 
             

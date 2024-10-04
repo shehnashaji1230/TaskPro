@@ -23,5 +23,7 @@ urlpatterns = [
     path('tasks/all/',views.TaskListView.as_view(),name='task-list'),
     path('tasks/<int:pk>/change/',views.TaskUpdateView.as_view(),name='task-update'),
     path('tasks/<int:pk>/remove/',views.TaskDeleteView.as_view(),name='task-delete'),
-    path("",views.TaskSummaryView.as_view(),name='task-summary')
+    path("",views.TaskSummaryView.as_view(),name='task-summary'),
+    path('register/',views.SignUpView.as_view(),name='signup'),
+    path('signin/',views.SignInView.as_view(),name='signin'),
 ]
