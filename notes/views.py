@@ -7,6 +7,7 @@ from django import forms
 from django.db.models import Q
 from django.db.models import Count
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate,login,logout
 # Create your views here.
 
 class TaskCreateView(View):
@@ -17,6 +18,7 @@ class TaskCreateView(View):
     def post(self,request,*args,**kwargs):
         form_instance=TaskForm(request.POST)
         if form_instance.is_valid():
+            form_instance.instance.user=request.user
             form_instance.save()
             messages.success(request,'task created')
             return redirect('task-list')
@@ -127,5 +129,28 @@ class SignInView(View):
     def get(self,request,*args,**kwargs):
         form_instance=SignInForm()
         return render(request,self.template_name,{'form':form_instance})
+    
+    def post(self,request,*args,**kwargs):
+
+        form_instance=SignInForm(request.POST)
+        # if form is valid
+        if form_instance.is_valid():
+            uname=form_instance.cleaned_data.get('username')
+            pwd=form_instance.cleaned_data.get('password')
+
+            # authenticate
+            user_obj=authenticate(request,username=uname,password=pwd)
+            # if user object is valid then call login to start session
+            if user_obj:
+                login(request,user_obj)
+                return redirect('task-list')
+        return render(request,self.template_name,{'form':form_instance})
+
+class SignOutView(View):
+
+    def get(self,request,*args,**kwargs):
+        logout(request)
+        return redirect('signin')
+
 
             
