@@ -8,8 +8,11 @@ from django.db.models import Q
 from django.db.models import Count
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
-# Create your views here.
+from notes.decorators import signin_required
+from django.utils.decorators import method_decorator
 
+# Create your views here.
+@method_decorator(signin_required,name='dispatch')
 class TaskCreateView(View):
     def get(self,request,*args,**kwargs):
         form_instance=TaskForm()
@@ -25,23 +28,27 @@ class TaskCreateView(View):
         else:
             messages.error(request,'failed to add')
             return render(request,'taskcreate.html',{'form':form_instance})
-
+@method_decorator(signin_required,name='dispatch')
 class TaskListView(View):
     def get(self,request,*args,**kwargs):
 
+       
         search_text=request.GET.get('search_text')
         selected_category=request.GET.get("category","all")
         if selected_category == 'all':
-            qs=Task.objects.all()
+            # qs=Task.objects.all()
+            qs=Task.objects.filter(user=request.user)
         else:
-            qs=Task.objects.filter(category=selected_category)
+            # to filter by logged in user tasks
+            qs=Task.objects.filter(category=selected_category,user=request.user)
         if search_text!=None:
-            qs=Task.objects.filter(Q(title__icontains=search_text)|Q(description__icontains=search_text))
+            qs=Task.objects.filter(user=request.user)
+            qs=qs.filter(Q(title__icontains=search_text)|Q(description__icontains=search_text))
            
         return render(request,'tasklist.html',{'tasks':qs,"selected":selected_category})
     
        
-
+@method_decorator(signin_required,name='dispatch')
 class TaskDetailView(View):
     def get(self,request,*args,**kwargs):
 
@@ -49,6 +56,7 @@ class TaskDetailView(View):
         qs=Task.objects.get(id=id)
         return render(request,'taskdetail.html',{'task':qs})
 
+@method_decorator(signin_required,name='dispatch')
 class TaskUpdateView(View):
     def get(self,request,*args,**kwargs):
         #extract pk from kwargs
@@ -86,13 +94,14 @@ class TaskUpdateView(View):
             return render(request,'taskedit.html',{'form':form_instance})
 
            
-
+@method_decorator(signin_required,name='dispatch')
 class TaskDeleteView(View):
     def get(self,request,*args,**kwargs):
         # extract id and delete task object with id
         Task.objects.get(id=kwargs.get('pk')).delete()
         return redirect('task-list')
 
+@method_decorator(signin_required,name='dispatch')
 class TaskSummaryView(View):
     def get(self,request,*args,**kwargs):
 
@@ -146,6 +155,7 @@ class SignInView(View):
                 return redirect('task-list')
         return render(request,self.template_name,{'form':form_instance})
 
+@method_decorator(signin_required,name='dispatch')
 class SignOutView(View):
 
     def get(self,request,*args,**kwargs):
