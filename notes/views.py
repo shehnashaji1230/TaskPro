@@ -9,10 +9,12 @@ from django.db.models import Count
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
 from notes.decorators import signin_required
+from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 
 # Create your views here.
-@method_decorator(signin_required,name='dispatch')
+decs=[signin_required,never_cache]
+@method_decorator(decs,name='dispatch')
 class TaskCreateView(View):
     def get(self,request,*args,**kwargs):
         form_instance=TaskForm()
@@ -28,7 +30,7 @@ class TaskCreateView(View):
         else:
             messages.error(request,'failed to add')
             return render(request,'taskcreate.html',{'form':form_instance})
-@method_decorator(signin_required,name='dispatch')
+@method_decorator(decs,name='dispatch')
 class TaskListView(View):
     def get(self,request,*args,**kwargs):
 
@@ -48,7 +50,7 @@ class TaskListView(View):
         return render(request,'tasklist.html',{'tasks':qs,"selected":selected_category})
     
        
-@method_decorator(signin_required,name='dispatch')
+@method_decorator(decs,name='dispatch')
 class TaskDetailView(View):
     def get(self,request,*args,**kwargs):
 
@@ -56,7 +58,7 @@ class TaskDetailView(View):
         qs=Task.objects.get(id=id)
         return render(request,'taskdetail.html',{'task':qs})
 
-@method_decorator(signin_required,name='dispatch')
+@method_decorator(decs,name='dispatch')
 class TaskUpdateView(View):
     def get(self,request,*args,**kwargs):
         #extract pk from kwargs
@@ -89,23 +91,26 @@ class TaskUpdateView(View):
             # add status to form instance
             form_instance.instance.status=request.POST.get('status')
             form_instance.save()
+            messages.success(request,'updated!')
             return redirect('task-list')
         else:
+            messages.error(request,'failed to update')
             return render(request,'taskedit.html',{'form':form_instance})
 
            
-@method_decorator(signin_required,name='dispatch')
+@method_decorator(decs,name='dispatch')
 class TaskDeleteView(View):
     def get(self,request,*args,**kwargs):
         # extract id and delete task object with id
         Task.objects.get(id=kwargs.get('pk')).delete()
         return redirect('task-list')
 
-@method_decorator(signin_required,name='dispatch')
+@method_decorator(decs,name='dispatch')
 class TaskSummaryView(View):
     def get(self,request,*args,**kwargs):
 
-        qs=Task.objects.all()
+        # qs=Task.objects.all()
+        qs=Task.objects.filter(user=request.user)
         total_task_count=qs.count()
         category_summary=qs.values("category").annotate(cat_count=Count("category"))
         # print(category_summary)
@@ -155,7 +160,7 @@ class SignInView(View):
                 return redirect('task-list')
         return render(request,self.template_name,{'form':form_instance})
 
-@method_decorator(signin_required,name='dispatch')
+@method_decorator(decs,name='dispatch')
 class SignOutView(View):
 
     def get(self,request,*args,**kwargs):
