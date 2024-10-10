@@ -121,7 +121,7 @@ class TaskSummaryView(View):
             "category_summary":category_summary,
             "status_summary":status_summary
         }
-        return render(request,"tasksummary.html",context)
+        return render(request,"dashboard.html",context)
 
 class SignUpView(View):
     template_name='register.html'
@@ -166,6 +166,11 @@ class SignOutView(View):
     def get(self,request,*args,**kwargs):
         logout(request)
         return redirect('signin')
+
+class DashboardView(View):
+    template_name='dashboard.html'
+    def get(self,request,*args,**kwargs):
+        return render(request,self.template_name)
 
 
             
